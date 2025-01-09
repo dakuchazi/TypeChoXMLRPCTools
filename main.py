@@ -42,6 +42,7 @@ class TypechoClient:
         self.username = username
         self.password = password
         self.blogid = 1  # Typecho默认blogid为1
+        self.current_file_name = None  # 添加文件名属性
 
     def get_posts(self):
         """获取已发布文章列表"""
@@ -158,6 +159,10 @@ def read_md(file_path):
                 metadata['title'] = "未命名文章"
                 logger.warning(f"{file_path} 没有设置标题，使用默认标题: 未命名文章")
             
+            # 如果没有指定 text_type，默认为 markdown
+            if not metadata.get('text_type'):
+                metadata['text_type'] = 'markdown'
+                
             return post.content, metadata
     except Exception as e:
         logger.error(f"读取Markdown文件失败 {file_path}: {str(e)}")
@@ -295,6 +300,9 @@ def main():
             link = f"https://{domain_name}/index.php/p/{sha1_key}.html"
             
             if link not in link_id_dic:
+                # 设置当前处理的文件名和文本类型
+                client.current_file_name = sha1_key
+                client.current_text_type = metadata.get('text_type', 'markdown')
                 # 发布新文章
                 client.new_post(
                     title=title,
