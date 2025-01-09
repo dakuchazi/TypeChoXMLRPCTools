@@ -61,13 +61,18 @@ class TypechoClient:
     def new_post(self, title, content, categories, tags, publish=True):
         """发布新文章"""
         try:
+            file_name = self.current_file_name
+            # 添加 markdown 标记
+            marked_content = "<!--markdown-->" + content
+            
             post = {
                 "title": title,
-                "description": content,
+                "description": marked_content,
                 "categories": categories,
                 "mt_keywords": ",".join(tags) if tags else "",
                 "post_type": "post",
-                "post_status": "publish" if publish else "draft"
+                "post_status": "publish" if publish else "draft",
+                "wp_slug": file_name
             }
             
             post_id = self.server.metaWeblog.newPost(
@@ -85,9 +90,12 @@ class TypechoClient:
     def edit_post(self, post_id, title, content, categories, tags, publish=True):
         """更新文章"""
         try:
+            # 添加 markdown 标记
+            marked_content = "<!--markdown-->" + content
+            
             post = {
                 "title": title,
-                "description": content,
+                "description": marked_content,
                 "categories": categories,
                 "mt_keywords": ",".join(tags) if tags else "",
                 "post_type": "post",
