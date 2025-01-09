@@ -106,15 +106,31 @@ class TypechoClient:
 
 def init_typecho_client():
     """初始化Typecho客户端"""
-    config_info = load_config()
-    username = config_info.get("USERNAME", os.environ.get("USERNAME"))
-    password = config_info.get("PASSWORD", os.environ.get("PASSWORD"))
-    xmlrpc_url = config_info.get("XMLRPC_PHP", os.environ.get("XMLRPC_PHP"))
+    try:
+        # 优先使用环境变量
+        username = os.environ.get("USERNAME")
+        password = os.environ.get("PASSWORD")
+        xmlrpc_php = os.environ.get("XMLRPC_PHP")
 
-    if not all([username, password, xmlrpc_url]):
-        raise ValueError("缺少必要的配置信息")
+        if not all([username, password, xmlrpc_php]):
+            # 如果环境变量不存在，尝试从配置文件读取
+            config_info = load_config()
+            username = config_info.get("USERNAME")
+            password = config_info.get("PASSWORD")
+            xmlrpc_php = config_info.get("XMLRPC_PHP")
 
-    return TypechoClient(xmlrpc_url, username, password)
+        if not all([username, password, xmlrpc_php]):
+            raise ValueError("缺少必要的配置信息")
+
+        # 从 XMLRPC_PHP 中提取域名
+        # 例如从 https://tc.xukucha.cn/action/xmlrpc 提取 tc.xukucha.cn
+        domain = re.match(r'https?://([^/]+)', xmlrpc_php).group(1)
+
+        return TypechoClient(xmlrpc_php, username, password), domain
+
+    except Exception as e:
+        logger.error(f"初始化客户端失败: {str(e)}")
+        raise
 
 def get_md_list(dir_path):
     """获取目录下的markdown文件列表"""
@@ -135,13 +151,14 @@ def read_md(file_path):
     try:
         with open(file_path, encoding='utf-8') as f:
             post = frontmatter.load(f)
+            metadata = post.metadata
             
-            # 如果没有标题，使用文件名作为标题
-            if not post.get('title'):
-                title = os.path.splitext(os.path.basename(file_path))[0]
-                post['title'] = title
+            # 如果没有标题，设置为默认标题
+            if not metadata.get('title'):
+                metadata['title'] = "未命名文章"
+                logger.warning(f"{file_path} 没有设置标题，使用默认标题: 未命名文章")
             
-            return post.content, post.metadata
+            return post.content, metadata
     except Exception as e:
         logger.error(f"读取Markdown文件失败 {file_path}: {str(e)}")
         raise
@@ -149,7 +166,7 @@ def read_md(file_path):
 def main():
     try:
         # 初始化Typecho客户端
-        client = init_typecho_client()
+        client, domain = init_typecho_client()
         
         # 获取已发布文章列表
         posts = client.get_posts()
@@ -169,7 +186,7 @@ def main():
                 
                 # 获取文章链接
                 file_name = os.path.basename(md_file).split('.')[0]
-                link = f"/archives/{file_name}.html"  # Typecho默认链接格式
+                link = f"https://{domain}/index.php/p/{file_name}.html"  # 完整的文章链接
                 
                 if link in post_dict:
                     # 更新已存在的文章
