@@ -2,6 +2,7 @@ from xmlrpc.client import ServerProxy
 import frontmatter
 import time
 import os
+from hashlib import sha1
 import json
 import re
 import urllib.parse
@@ -123,7 +124,6 @@ def init_typecho_client():
             raise ValueError("缺少必要的配置信息")
 
         # 从 XMLRPC_PHP 中提取域名
-        # 例如从 https://tc.xukucha.cn/action/xmlrpc 提取 tc.xukucha.cn
         domain = re.match(r'https?://([^/]+)', xmlrpc_php).group(1)
 
         return TypechoClient(xmlrpc_php, username, password), domain
@@ -163,54 +163,165 @@ def read_md(file_path):
         logger.error(f"读取Markdown文件失败 {file_path}: {str(e)}")
         raise
 
+def get_sha1(filename):
+    """计算文件的SHA1值"""
+    try:
+        sha1_obj = sha1()
+        with open(filename, 'rb') as f:
+            sha1_obj.update(f.read())
+        result = sha1_obj.hexdigest()
+        return result
+    except Exception as e:
+        logger.error(f"计算文件SHA1失败 {filename}: {str(e)}")
+        raise
+
+def get_md_sha1_dic(file):
+    """获取或创建SHA1字典"""
+    try:
+        if os.path.exists(file):
+            return read_dic_from_file(file)
+        else:
+            write_dic_info_to_file({}, file)
+            return {}
+    except Exception as e:
+        logger.error(f"获取SHA1字典失败: {str(e)}")
+        raise
+
+def write_dic_info_to_file(dic_info, file):
+    """将字典信息写入文件"""
+    try:
+        with open(file, 'w', encoding='utf-8') as f:
+            json.dump(dic_info, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        logger.error(f"写入文件失败 {file}: {str(e)}")
+        raise
+
+def read_dic_from_file(file):
+    """从文件读取字典信息"""
+    try:
+        with open(file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        logger.error(f"读取文件失败 {file}: {str(e)}")
+        raise
+
+def rebuild_md_sha1_dic(file, md_dir):
+    """重建SHA1字典"""
+    try:
+        md_sha1_dic = {}
+        md_list = get_md_list(md_dir)
+
+        for md in md_list:
+            key = os.path.basename(md).split(".")[0]
+            value = get_sha1(md)
+            md_sha1_dic[key] = {
+                "hash_value": value,
+                "file_name": key,
+                "encode_file_name": urllib.parse.quote(key, safe='').lower()
+            }
+
+        md_sha1_dic["update_time"] = time.strftime('%Y-%m-%d-%H-%M-%S')
+        write_dic_info_to_file(md_sha1_dic, file)
+        logger.info("重建SHA1字典成功")
+    except Exception as e:
+        logger.error(f"重建SHA1字典失败: {str(e)}")
+        raise
+
+def insert_index_info_in_readme(domain_name):
+    """更新README.md的文章目录"""
+    try:
+        md_list = get_md_list(os.path.join(os.getcwd(), "_posts"))
+        insert_info = ""
+        md_list.sort(reverse=True)
+
+        for md in md_list:
+            content, metadata = read_md(md)
+            title = metadata.get("title", "")
+            if title:
+                file_name = os.path.basename(md).split('.')[0]
+                post_url = f"https://{domain_name}/index.php/p/{file_name}.html"
+                insert_info += f"[{title}]({post_url})\n\n"
+
+        insert_info = f"---start---\n## 目录({time.strftime('%Y年%m月%d日')}更新)\n{insert_info}---end---"
+
+        readme_path = os.path.join(os.getcwd(), "README.md")
+        with open(readme_path, 'r', encoding='utf-8') as f:
+            readme_md_content = f.read()
+
+        new_readme_md_content = re.sub(r'---start---(.|\n)*---end---', insert_info, readme_md_content)
+
+        with open(readme_path, 'w', encoding='utf-8') as f:
+            f.write(new_readme_md_content)
+
+        logger.info("更新README.md成功")
+        return True
+    except Exception as e:
+        logger.error(f"更新README.md失败: {str(e)}")
+        raise
+
 def main():
     try:
         # 初始化Typecho客户端
-        client, domain = init_typecho_client()
+        client, domain_name = init_typecho_client()
         
-        # 获取已发布文章列表
-        posts = client.get_posts()
-        post_dict = {post["link"]: post["id"] for post in posts}
+        # 1. 获取网站数据库中已有的文章列表
+        post_link_id_list = client.get_posts()
+        link_id_dic = {post["link"]: post["id"] for post in post_link_id_list}
         
-        # 获取本地文章列表
+        # 2. 获取md_sha1_dic
+        md_sha1_dic = get_md_sha1_dic(os.path.join(os.getcwd(), ".md_sha1"))
+        
+        # 3. 开始同步
         md_list = get_md_list(os.path.join(os.getcwd(), "_posts"))
-        
-        # 同步文章
-        for md_file in md_list:
-            try:
-                content, metadata = read_md(md_file)
-                
-                title = metadata.get('title', '未命名文章')
-                categories = metadata.get('categories', [])
-                tags = metadata.get('tags', [])
-                
-                # 获取文章链接
-                file_name = os.path.basename(md_file).split('.')[0]
-                link = f"https://{domain}/index.php/p/{file_name}.html"  # 完整的文章链接
-                
-                if link in post_dict:
-                    # 更新已存在的文章
-                    client.edit_post(
-                        post_dict[link],
-                        title,
-                        content,  # 直接使用Markdown内容
-                        categories,
-                        tags
-                    )
-                    logger.info(f"更新文章成功: {title}")
-                else:
-                    # 发布新文章
-                    post_id = client.new_post(
-                        title,
-                        content,  # 直接使用Markdown内容
-                        categories,
-                        tags
-                    )
-                    logger.info(f"发布新文章成功: {title}")
-                    
-            except Exception as e:
-                logger.error(f"处理文章 {md_file} 失败: {str(e)}")
+
+        for md in md_list:
+            sha1_key = os.path.basename(md).split(".")[0]
+            sha1_value = get_sha1(md)
+            
+            # 检查文件是否需要更新
+            if (sha1_key in md_sha1_dic and 
+                "hash_value" in md_sha1_dic[sha1_key] and 
+                sha1_value == md_sha1_dic[sha1_key]["hash_value"]):
+                logger.info(f"{md} 无需同步")
                 continue
+            
+            logger.info(f"开始同步 {md}")
+            content, metadata = read_md(md)
+            
+            title = metadata.get('title', '未命名文章')
+            categories = metadata.get('categories', [])
+            tags = metadata.get('tags', [])
+            link = f"https://{domain_name}/index.php/p/{sha1_key}.html"
+            
+            if link not in link_id_dic:
+                # 发布新文章
+                client.new_post(
+                    title=title,
+                    content=content,
+                    categories=categories,
+                    tags=tags
+                )
+                logger.info(f"创建新文章成功: {link}")
+            else:
+                # 更新已有文章
+                client.edit_post(
+                    post_id=link_id_dic[link],
+                    title=title,
+                    content=content,
+                    categories=categories,
+                    tags=tags
+                )
+                logger.info(f"更新文章成功: {link}")
+
+        # 4. 重建md_sha1_dic
+        rebuild_md_sha1_dic(
+            os.path.join(os.getcwd(), ".md_sha1"),
+            os.path.join(os.getcwd(), "_posts")
+        )
+        
+        # 5. 更新README.md
+        insert_index_info_in_readme(domain_name)
         
         logger.info("同步完成")
         
