@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "3578189799a4e798cb47f10feb03ca544ea418aab99d21382c9d69eb8374d5a8"
+            "sha256": "ab7f3867a3aa65ef8244eb9028d058d86ee631fb961571fda57980b5d711ba8c"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -16,24 +16,6 @@
         ]
     },
     "default": {
-        "mistune": {
-            "hashes": [
-                "sha256:71481854c30fdbc938963d3605b72501f5c10a9320ecd412c121c163a1c7d205",
-                "sha256:fc7f93ded930c92394ef2cb6f04a8aabab4117a91449e72dcc8dfa646a508be8"
-            ],
-            "index": "pypi",
-            "markers": "python_version >= '3.7'",
-            "version": "==3.0.2"
-        },
-        "pygments": {
-            "hashes": [
-                "sha256:b27c2826c47d0f3219f29554824c30c5e8945175d888647acd804ddd04af846c",
-                "sha256:da46cec9fd2de5be3a8a784f434e4c4ab670b4ff54d605c4c2717e9d49c4c367"
-            ],
-            "index": "pypi",
-            "markers": "python_version >= '3.7'",
-            "version": "==2.17.2"
-        },
         "python-frontmatter": {
             "hashes": [
                 "sha256:a7dcdfdaf498d488dce98bfa9452f8b70f803a923760ceab1ebd99291d98d28a",
@@ -41,13 +23,6 @@
             ],
             "index": "pypi",
             "version": "==0.5.0"
-        },
-        "python-wordpress-xmlrpc": {
-            "hashes": [
-                "sha256:e15a8e9aca16db169369e5967299c29965570ed83c7c3ad418ed59b5ad1471bd"
-            ],
-            "index": "pypi",
-            "version": "==2.3"
         },
         "pyyaml": {
             "hashes": [
