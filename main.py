@@ -101,10 +101,12 @@ class TypechoClient:
 
     def new_post(self, title, content, categories, tags, metadata, publish=True):
         """发布新文章"""
-        try:    
+        try:
+            file_name = self.current_file_name
             # 添加 markdown 标记
             marked_content = "<!--markdown-->" + content
             
+            # 构建将要发送的数据
             post = {
                 "title": title,
                 "description": marked_content,
@@ -112,13 +114,21 @@ class TypechoClient:
                 "mt_keywords": ",".join(tags) if tags else "",
                 "post_type": metadata.get('postType', 'post'),
                 "post_status": "publish" if publish else "draft",
-                "wp_slug": self.current_file_name
+                "wp_slug": file_name,
+                "custom_fields": [
+                    {
+                        "key": "postType",
+                        "value": metadata.get('postType', 'post')
+                    },
+                    {
+                        "key": "thumbnail",
+                        "value": metadata.get('thumbnail', '')
+                    }
+                ]
             }
             
-            # 只有在有自定义字段时才添加
-            custom_fields = self._build_custom_fields(metadata)
-            if custom_fields:
-                post["custom_fields"] = custom_fields
+            # 添加日志
+            logger.info(f"Sending post data: {json.dumps(post, indent=2)}")
             
             post_id = self.server.metaWeblog.newPost(
                 self.blogid,
@@ -214,21 +224,25 @@ def read_md(file_path):
             
             # 处理基础字段，确保字符串类型
             metadata['title'] = str(metadata.get('title', '')).strip() or "未命名文章"
+            
+            # 处理字符串形式的分类和标签
+            categories = metadata.get('categories', [])
+            if isinstance(categories, str):
+                metadata['categories'] = [x.strip() for x in categories.split(',') if x.strip()]
+            else:
+                metadata['categories'] = list(categories)
+
+            tags = metadata.get('tags', [])
+            if isinstance(tags, str):
+                metadata['tags'] = [x.strip() for x in tags.split(',') if x.strip()]
+            else:
+                metadata['tags'] = list(tags)
+                
+            # 其他字段保持不变
             metadata['description'] = str(metadata.get('description', '')).strip()
             metadata['location'] = str(metadata.get('location', '')).strip()
             metadata['thumbnail'] = str(metadata.get('thumbnail', '')).strip()
             
-            # 处理数组类字段
-            try:
-                metadata['categories'] = list(metadata.get('categories', []))
-            except:
-                metadata['categories'] = []
-                
-            try:
-                metadata['tags'] = list(metadata.get('tags', []))
-            except:
-                metadata['tags'] = []
-                
             try:
                 metadata['keywords'] = list(metadata.get('keywords', []))
             except:
