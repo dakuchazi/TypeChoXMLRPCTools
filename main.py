@@ -63,6 +63,8 @@ class TypechoClient:
 
     def _build_custom_fields(self, metadata):
         """构建文章自定义字段，只返回有值的字段"""
+        logger.info(f"原始 metadata: {metadata}")
+        logger.info(f"处理前的 thumbnail: {metadata.get('thumbnail')}")
         custom_fields = []
         
         # 处理所有可能的自定义字段
@@ -76,7 +78,7 @@ class TypechoClient:
                 })
 
         logger.info(f"生成的 custom_fields:{custom_fields}")   
-             
+
         # 处理 keywords 数组
         keywords = metadata.get('keywords', [])
         if keywords:
