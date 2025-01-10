@@ -61,6 +61,42 @@ class TypechoClient:
             logger.error(f"获取文章列表失败: {str(e)}")
             raise
 
+    def create_category(self, name):
+        """创建分类"""
+        try:
+            return self.server.wp.newCategory(
+                self.blogid,
+                self.username,
+                self.password,
+                {
+                    'name': name,
+                    'description': name
+                }
+            )
+        except Exception as e:
+            logger.error(f"创建分类失败: {str(e)}")
+            raise
+
+    def ensure_categories(self, categories):
+        """确保所有分类存在，不存在则创建"""
+        try:
+            # 获取现有分类
+            existing_categories = self.server.metaWeblog.getCategories(
+                self.blogid,
+                self.username,
+                self.password
+            )
+            existing_names = [cat['categoryName'] for cat in existing_categories]
+            
+            # 创建不存在的分类
+            for category in categories:
+                if category not in existing_names:
+                    logger.info(f"创建新分类: {category}")
+                    self.create_category(category)
+        except Exception as e:
+            logger.error(f"检查分类失败: {str(e)}")
+            raise
+
     def _build_custom_fields(self, metadata):
         """构建文章自定义字段，只返回有值的字段"""
         custom_fields = []
@@ -89,6 +125,10 @@ class TypechoClient:
     def new_post(self, title, content, categories, tags, metadata, publish=True):
         """发布新文章"""
         try:
+            # 确保分类存在
+            if categories:
+                self.ensure_categories(categories)
+                
             # 添加 markdown 标记
             marked_content = "<!--markdown-->" + content
             
@@ -122,6 +162,10 @@ class TypechoClient:
     def edit_post(self, post_id, title, content, categories, tags, metadata, publish=True):
         """更新文章"""
         try:
+            # 确保分类存在
+            if categories:
+                self.ensure_categories(categories)
+                
             # 添加 markdown 标记
             marked_content = "<!--markdown-->" + content
             
