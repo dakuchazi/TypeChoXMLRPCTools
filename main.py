@@ -42,7 +42,7 @@ class TypechoClient:
         self.username = username
         self.password = password
         self.blogid = 1  # Typecho默认blogid为1
-        self.current_file_name = None  # 添加文件名属性
+        self.current_file_name = None
 
     def get_posts(self):
         """获取已发布文章列表"""
@@ -53,15 +53,42 @@ class TypechoClient:
                 self.password, 
                 1000  # 获取最近1000篇文章
             )
+            # 添加日志来查看实际的链接格式
+            if posts:
+                logger.info(f"Sample post link: {posts[0].get('link', '')}")
             return [{"id": post["postid"], "link": post.get("link", "")} for post in posts]
         except Exception as e:
             logger.error(f"获取文章列表失败: {str(e)}")
             raise
 
-    def new_post(self, title, content, categories, tags, publish=True):
+    def _build_custom_fields(self, metadata):
+        """构建文章自定义字段，只返回有值的字段"""
+        custom_fields = []
+        
+        # 处理所有可能的自定义字段
+        str_fields = ['postType', 'description', 'location', 'thumbnail']
+        for key in str_fields:
+            value = metadata.get(key, '').strip()
+            if value:  # 只添加有值的字段
+                custom_fields.append({
+                    "key": key,
+                    "value": value
+                })
+        
+        # 处理 keywords 数组
+        keywords = metadata.get('keywords', [])
+        if keywords:
+            custom_fields.append({
+                "key": "keywords",
+                "value": ",".join(map(str, keywords))
+            })
+        
+        # 如果没有任何自定义字段，返回 None
+        return custom_fields or None
+
+    def new_post(self, title, content, categories, tags, metadata, publish=True):
         """发布新文章"""
         try:
-            file_name = self.current_file_name
             # 添加 markdown 标记
             marked_content = "<!--markdown-->" + content
             
@@ -70,10 +97,15 @@ class TypechoClient:
                 "description": marked_content,
                 "categories": categories,
                 "mt_keywords": ",".join(tags) if tags else "",
-                "post_type": "post",
+                "post_type": metadata.get('postType', 'post'),
                 "post_status": "publish" if publish else "draft",
-                "wp_slug": file_name
+                "wp_slug": self.current_file_name
             }
+            
+            # 只有在有自定义字段时才添加
+            custom_fields = self._build_custom_fields(metadata)
+            if custom_fields:
+                post["custom_fields"] = custom_fields
             
             post_id = self.server.metaWeblog.newPost(
                 self.blogid,
@@ -87,7 +119,7 @@ class TypechoClient:
             logger.error(f"发布文章失败: {str(e)}")
             raise
 
-    def edit_post(self, post_id, title, content, categories, tags, publish=True):
+    def edit_post(self, post_id, title, content, categories, tags, metadata, publish=True):
         """更新文章"""
         try:
             # 添加 markdown 标记
@@ -98,9 +130,14 @@ class TypechoClient:
                 "description": marked_content,
                 "categories": categories,
                 "mt_keywords": ",".join(tags) if tags else "",
-                "post_type": "post",
+                "post_type": metadata.get('postType', 'post'),
                 "post_status": "publish" if publish else "draft"
             }
+            
+            # 只有在有自定义字段时才添加
+            custom_fields = self._build_custom_fields(metadata)
+            if custom_fields:
+                post["custom_fields"] = custom_fields
             
             result = self.server.metaWeblog.editPost(
                 post_id,
@@ -162,15 +199,32 @@ def read_md(file_path):
             post = frontmatter.load(f)
             metadata = post.metadata
             
-            # 如果没有标题，设置为默认标题
-            if not metadata.get('title'):
-                metadata['title'] = "未命名文章"
-                logger.warning(f"{file_path} 没有设置标题，使用默认标题: 未命名文章")
+            # 处理基础字段，确保字符串类型
+            metadata['title'] = str(metadata.get('title', '')).strip() or "未命名文章"
+            metadata['description'] = str(metadata.get('description', '')).strip()
+            metadata['location'] = str(metadata.get('location', '')).strip()
+            metadata['thumbnail'] = str(metadata.get('thumbnail', '')).strip()
             
-            # 如果没有指定 text_type，默认为 markdown
-            if not metadata.get('text_type'):
-                metadata['text_type'] = 'markdown'
+            # 处理数组类字段
+            try:
+                metadata['categories'] = list(metadata.get('categories', []))
+            except:
+                metadata['categories'] = []
                 
+            try:
+                metadata['tags'] = list(metadata.get('tags', []))
+            except:
+                metadata['tags'] = []
+                
+            try:
+                metadata['keywords'] = list(metadata.get('keywords', []))
+            except:
+                metadata['keywords'] = []
+            
+            # 处理 postType
+            post_type = str(metadata.get('postType', '')).strip().lower()
+            metadata['postType'] = 'shuoshuo' if post_type == 'shuoshuo' else 'post'
+            
             return post.content, metadata
     except Exception as e:
         logger.error(f"读取Markdown文件失败 {file_path}: {str(e)}")
@@ -308,15 +362,14 @@ def main():
             link = f"https://{domain_name}/index.php/p/{sha1_key}.html"
             
             if link not in link_id_dic:
-                # 设置当前处理的文件名和文本类型
-                client.current_file_name = sha1_key
-                client.current_text_type = metadata.get('text_type', 'markdown')
                 # 发布新文章
+                client.current_file_name = sha1_key
                 client.new_post(
                     title=title,
                     content=content,
                     categories=categories,
-                    tags=tags
+                    tags=tags,
+                    metadata=metadata
                 )
                 logger.info(f"创建新文章成功: {link}")
             else:
@@ -326,7 +379,8 @@ def main():
                     title=title,
                     content=content,
                     categories=categories,
-                    tags=tags
+                    tags=tags,
+                    metadata=metadata
                 )
                 logger.info(f"更新文章成功: {link}")
 
