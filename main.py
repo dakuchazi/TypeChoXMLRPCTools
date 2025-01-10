@@ -74,7 +74,9 @@ class TypechoClient:
                     "key": key,
                     "value": value
                 })
-        
+
+        logger.info(f"生成的 custom_fields:{custom_fields}")   
+             
         # 处理 keywords 数组
         keywords = metadata.get('keywords', [])
         if keywords:
