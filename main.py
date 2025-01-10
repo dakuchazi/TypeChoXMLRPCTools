@@ -64,7 +64,16 @@ class TypechoClient:
     def _build_custom_fields(self, metadata):
         """构建文章自定义字段，只返回有值的字段"""
         logger.info(f"原始 metadata: {metadata}")
-        logger.info(f"处理前的 thumbnail: {metadata.get('thumbnail')}")
+
+
+        # 强制打印 thumbnail 详细信息
+        thumbnail = metadata.get('thumbnail', '')
+        logger.info(f"处理前的 thumbnail 详细信息:")
+        logger.info(f"  值: {thumbnail}")
+        logger.info(f"  类型: {type(thumbnail)}")
+        logger.info(f"  是否为空: {not bool(thumbnail)}")
+
+        
         custom_fields = []
         
         # 处理所有可能的自定义字段
