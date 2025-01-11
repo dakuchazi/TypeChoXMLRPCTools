@@ -9,11 +9,6 @@
     "file_name": "2024-12-19-strapi-docker-nginx-blog",
     "encode_file_name": "2024-12-19-strapi-docker-nginx-blog"
   },
-  "2025-01-10-tes666": {
-    "hash_value": "d705a10b53573805675dda291a7d9d3da974fe8c",
-    "file_name": "2025-01-10-tes666",
-    "encode_file_name": "2025-01-10-tes666"
-  },
   "2025-01-03-http-to-https": {
     "hash_value": "ed538604fb9978ac269d3dabe5cfd61e40c3b908",
     "file_name": "2025-01-03-http-to-https",
@@ -24,5 +19,5 @@
     "file_name": "2024-07-22-frontend-interview-questions",
     "encode_file_name": "2024-07-22-frontend-interview-questions"
   },
-  "update_time": "2025-01-11-07-08-52"
+  "update_time": "2025-01-11-07-14-07"
 }
