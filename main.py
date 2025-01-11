@@ -94,18 +94,18 @@ class TypechoClient:
                 "mt_keywords": ",".join(tags) if tags else "",
                 "post_type": "post",
                 "post_status": "publish" if publish else "draft",
-                "wp_slug": self.current_file_name
+                "wp_slug": self.current_file_name,
+                # 关键修改在这里，使用fields而不是custom_fields
+                "fields": {
+                    "postType": ["str", metadata.get('postType', '')],
+                    "thumbnail": ["str", metadata.get('thumbnail', '')]
+                }
             }
             
-            # 添加自定义字段
-            custom_fields = self._build_custom_fields(metadata)
-            if custom_fields:
-                post["custom_fields"] = custom_fields
-            
             post_id = self.server.metaWeblog.newPost(
-                self.blogid,
-                self.username,
-                self.password,
+                self.blogid, 
+                self.username, 
+                self.password, 
                 post,
                 publish
             )
@@ -119,20 +119,19 @@ class TypechoClient:
         try:
             marked_content = "<!--markdown-->" + content
             
-            # 构建文章数据
             post = {
                 "title": title,
                 "description": marked_content,
                 "categories": categories,
                 "mt_keywords": ",".join(tags) if tags else "",
                 "post_type": "post",
-                "post_status": "publish" if publish else "draft"
+                "post_status": "publish" if publish else "draft",
+                # 同样在编辑时也使用正确的字段格式
+                "fields": {
+                    "postType": ["str", metadata.get('postType', '')],
+                    "thumbnail": ["str", metadata.get('thumbnail', '')]
+                }
             }
-            
-            # 添加自定义字段
-            custom_fields = self._build_custom_fields(metadata)
-            if custom_fields:
-                post["custom_fields"] = custom_fields
             
             result = self.server.metaWeblog.editPost(
                 post_id,
