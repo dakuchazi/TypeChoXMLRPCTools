@@ -102,33 +102,29 @@ class TypechoClient:
     def new_post(self, title, content, categories, tags, metadata, publish=True):
         """发布新文章"""
         try:
-            file_name = self.current_file_name
             # 添加 markdown 标记
             marked_content = "<!--markdown-->" + content
             
-            # 构建将要发送的数据
+            # 构建自定义字段
+            fields = {}
+            if metadata.get('postType'):
+                fields['postType'] = metadata['postType']
+            if metadata.get('thumbnail'):
+                fields['thumbnail'] = metadata['thumbnail']
+            
             post = {
                 "title": title,
                 "description": marked_content,
                 "categories": categories,
                 "mt_keywords": ",".join(tags) if tags else "",
-                "post_type": metadata.get('postType', 'post'),
+                "post_type": "post",
                 "post_status": "publish" if publish else "draft",
-                "wp_slug": file_name,
-                "custom_fields": [
-                    {
-                        "key": "postType",
-                        "value": metadata.get('postType', 'post')
-                    },
-                    {
-                        "key": "thumbnail",
-                        "value": metadata.get('thumbnail', '')
-                    }
-                ]
+                "wp_slug": self.current_file_name
             }
             
-            # 添加日志
-            logger.info(f"Sending post data: {json.dumps(post, indent=2)}")
+            # 只有在有自定义字段时才添加
+            if fields:
+                post["fields"] = fields
             
             post_id = self.server.metaWeblog.newPost(
                 self.blogid,
@@ -144,23 +140,29 @@ class TypechoClient:
 
     def edit_post(self, post_id, title, content, categories, tags, metadata, publish=True):
         """更新文章"""
-        try:                
+        try:
             # 添加 markdown 标记
             marked_content = "<!--markdown-->" + content
             
+            # 构建自定义字段
+            fields = {}
+            if metadata.get('postType'):
+                fields['postType'] = metadata['postType']
+            if metadata.get('thumbnail'):
+                fields['thumbnail'] = metadata['thumbnail']
+                
             post = {
                 "title": title,
                 "description": marked_content,
                 "categories": categories,
                 "mt_keywords": ",".join(tags) if tags else "",
-                "post_type": metadata.get('postType', 'post'),
+                "post_type": "post",
                 "post_status": "publish" if publish else "draft"
             }
             
             # 只有在有自定义字段时才添加
-            custom_fields = self._build_custom_fields(metadata)
-            if custom_fields:
-                post["custom_fields"] = custom_fields
+            if fields:
+                post["fields"] = fields
             
             result = self.server.metaWeblog.editPost(
                 post_id,
