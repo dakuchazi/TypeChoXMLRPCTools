@@ -41,76 +41,35 @@ class TypechoClient:
         self.server = ServerProxy(xmlrpc_url)
         self.username = username
         self.password = password
-        self.blogid = 1  # Typecho默认blogid为1
+        self.blogid = 1
         self.current_file_name = None
 
-    def get_posts(self):
-        """获取已发布文章列表"""
-        try:
-            posts = self.server.metaWeblog.getRecentPosts(
-                self.blogid, 
-                self.username, 
-                self.password, 
-                1000  # 获取最近1000篇文章
-            )
-            # 添加日志来查看实际的链接格式
-            if posts:
-                logger.info(f"Sample post link: {posts[0].get('link', '')}")
-            return [{"id": post["postid"], "link": post.get("link", "")} for post in posts]
-        except Exception as e:
-            logger.error(f"获取文章列表失败: {str(e)}")
-            raise
-
     def _build_custom_fields(self, metadata):
-        """构建文章自定义字段，只返回有值的字段"""
-        logger.info(f"原始 metadata: {metadata}")
-
-
-        # 强制打印 thumbnail 详细信息
-        thumbnail = metadata.get('thumbnail', '')
-        logger.info(f"处理前的 thumbnail 详细信息:")
-        logger.info(f"  值: {thumbnail}")
-        logger.info(f"  类型: {type(thumbnail)}")
-        logger.info(f"  是否为空: {not bool(thumbnail)}")
-
-        
+        """构建文章自定义字段"""
         custom_fields = []
         
-        # 处理所有可能的自定义字段
-        str_fields = ['postType', 'description', 'location', 'thumbnail']
-        for key in str_fields:
-            value = metadata.get(key, '').strip()
-            if value:  # 只添加有值的字段
-                custom_fields.append({
-                    "key": key,
-                    "value": value
-                })
-
-        logger.info(f"生成的 custom_fields:{custom_fields}")   
-
-        # 处理 keywords 数组
-        keywords = metadata.get('keywords', [])
-        if keywords:
+        # 处理 postType
+        if post_type := metadata.get('postType'):
             custom_fields.append({
-                "key": "keywords",
-                "value": ",".join(map(str, keywords))
+                'key': 'postType',
+                'value': post_type
             })
         
-        # 如果没有任何自定义字段，返回 None
-        return custom_fields or None
+        # 处理 thumbnail
+        if thumbnail := metadata.get('thumbnail'):
+            custom_fields.append({
+                'key': 'thumbnail',
+                'value': thumbnail
+            })
+            
+        return custom_fields if custom_fields else None
 
     def new_post(self, title, content, categories, tags, metadata, publish=True):
         """发布新文章"""
         try:
             marked_content = "<!--markdown-->" + content
             
-            # 构建自定义字段，每个字段包含类型信息
-            fields = {}
-            if metadata.get('postType'):
-                fields['postType'] = ['str', metadata['postType']]
-            if metadata.get('thumbnail'):
-                fields['thumbnail'] = ['str', metadata['thumbnail']]
-            
+            # 构建文章数据
             post = {
                 "title": title,
                 "description": marked_content,
@@ -118,9 +77,13 @@ class TypechoClient:
                 "mt_keywords": ",".join(tags) if tags else "",
                 "post_type": "post",
                 "post_status": "publish" if publish else "draft",
-                "wp_slug": self.current_file_name,
-                "fields": fields
+                "wp_slug": self.current_file_name
             }
+            
+            # 添加自定义字段
+            custom_fields = self._build_custom_fields(metadata)
+            if custom_fields:
+                post["custom_fields"] = custom_fields
             
             post_id = self.server.metaWeblog.newPost(
                 self.blogid,
@@ -137,16 +100,9 @@ class TypechoClient:
     def edit_post(self, post_id, title, content, categories, tags, metadata, publish=True):
         """更新文章"""
         try:
-            # 添加 markdown 标记
             marked_content = "<!--markdown-->" + content
             
-            # 构建自定义字段
-            fields = {}
-            if metadata.get('postType'):
-                fields['postType'] = metadata['postType']
-            if metadata.get('thumbnail'):
-                fields['thumbnail'] = metadata['thumbnail']
-                
+            # 构建文章数据
             post = {
                 "title": title,
                 "description": marked_content,
@@ -156,9 +112,10 @@ class TypechoClient:
                 "post_status": "publish" if publish else "draft"
             }
             
-            # 只有在有自定义字段时才添加
-            if fields:
-                post["fields"] = fields
+            # 添加自定义字段
+            custom_fields = self._build_custom_fields(metadata)
+            if custom_fields:
+                post["custom_fields"] = custom_fields
             
             result = self.server.metaWeblog.editPost(
                 post_id,
