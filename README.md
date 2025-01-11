@@ -2,11 +2,7 @@
 
 ---start---
 ## 目录(2025年01月11日更新)
-[测试文章234](https://tc.xukucha.cn/index.php/p/2025-01-11-test3.html)
-
-[测试文章3](https://tc.xukucha.cn/index.php/p/2025-01-11-test2.html)
-
-[测试文章2](https://tc.xukucha.cn/index.php/p/2025-01-10-test1.html)
+[测试文章444](https://tc.xukucha.cn/index.php/p/2025-01-10-test2343.html)
 
 [如何把自己的网站从http变成https，设置https证书自动更新](https://tc.xukucha.cn/index.php/p/2025-01-03-http-to-https.html)
 
