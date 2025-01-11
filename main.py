@@ -125,6 +125,11 @@ class TypechoClient:
             # 只有在有自定义字段时才添加
             if fields:
                 post["fields"] = fields
+
+            # 添加日志
+            logger.info(f"Sending post data: {json.dumps(post, indent=2)}")
+            # 打印 fields 格式
+            logger.info(f"Fields format: {json.dumps(fields, indent=2)}")
             
             post_id = self.server.metaWeblog.newPost(
                 self.blogid,
