@@ -44,6 +44,23 @@ class TypechoClient:
         self.blogid = 1
         self.current_file_name = None
 
+    def get_posts(self):
+        """获取已发布文章列表"""
+        try:
+            posts = self.server.metaWeblog.getRecentPosts(
+                self.blogid, 
+                self.username, 
+                self.password, 
+                1000  # 获取最近1000篇文章
+            )
+            # 添加日志来查看实际的链接格式
+            if posts:
+                logger.info(f"Sample post link: {posts[0].get('link', '')}")
+            return [{"id": post["postid"], "link": post.get("link", "")} for post in posts]
+        except Exception as e:
+            logger.error(f"获取文章列表失败: {str(e)}")
+            raise
+
     def _build_custom_fields(self, metadata):
         """构建文章自定义字段"""
         custom_fields = []
