@@ -102,15 +102,14 @@ class TypechoClient:
     def new_post(self, title, content, categories, tags, metadata, publish=True):
         """发布新文章"""
         try:
-            # 添加 markdown 标记
             marked_content = "<!--markdown-->" + content
             
-            # 构建自定义字段
+            # 构建自定义字段，每个字段包含类型信息
             fields = {}
             if metadata.get('postType'):
-                fields['postType'] = metadata['postType']
+                fields['postType'] = ['str', metadata['postType']]
             if metadata.get('thumbnail'):
-                fields['thumbnail'] = metadata['thumbnail']
+                fields['thumbnail'] = ['str', metadata['thumbnail']]
             
             post = {
                 "title": title,
@@ -119,17 +118,9 @@ class TypechoClient:
                 "mt_keywords": ",".join(tags) if tags else "",
                 "post_type": "post",
                 "post_status": "publish" if publish else "draft",
-                "wp_slug": self.current_file_name
+                "wp_slug": self.current_file_name,
+                "fields": fields
             }
-            
-            # 只有在有自定义字段时才添加
-            if fields:
-                post["fields"] = fields
-
-            # 添加日志
-            logger.info(f"Sending post data: {json.dumps(post, indent=2)}")
-            # 打印 fields 格式
-            logger.info(f"Fields format: {json.dumps(fields, indent=2)}")
             
             post_id = self.server.metaWeblog.newPost(
                 self.blogid,
