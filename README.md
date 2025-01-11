@@ -1,7 +1,9 @@
 # 大苦茶子Github仓库
 
 ---start---
-## 目录(2025年01月10日更新)
+## 目录(2025年01月11日更新)
+[测试文章234](https://tc.xukucha.cn/index.php/p/2025-01-11-test3.html)
+
 [测试文章3](https://tc.xukucha.cn/index.php/p/2025-01-11-test2.html)
 
 [测试文章2](https://tc.xukucha.cn/index.php/p/2025-01-10-test1.html)
