@@ -53,7 +53,6 @@ class TypechoClient:
                 self.password, 
                 1000  # 获取最近1000篇文章
             )
-            # 添加日志来查看实际的链接格式
             if posts:
                 logger.info(f"Sample post link: {posts[0].get('link', '')}")
             return [{"id": post["postid"], "link": post.get("link", "")} for post in posts]
@@ -61,46 +60,40 @@ class TypechoClient:
             logger.error(f"获取文章列表失败: {str(e)}")
             raise
 
-    def _build_custom_fields(self, metadata):
-        """构建文章自定义字段"""
-        custom_fields = []
+    def _build_post_data(self, title, content, categories, tags, metadata, publish=True):
+        """构建文章数据，用于新建和编辑文章"""
+        # 添加markdown标记
+        marked_content = "<!--markdown-->" + content
         
-        # 处理 postType
-        if post_type := metadata.get('postType'):
-            custom_fields.append({
-                'key': 'postType',
-                'value': post_type
-            })
-        
-        # 处理 thumbnail
-        if thumbnail := metadata.get('thumbnail'):
-            custom_fields.append({
-                'key': 'thumbnail',
-                'value': thumbnail
-            })
+        # 构建基础文章数据
+        post = {
+            "title": title,
+            "description": marked_content,
+            "categories": categories,
+            "mt_keywords": ",".join(tags) if tags else "",
+            "post_type": "post",
+            "post_status": "publish" if publish else "draft",
+            "fields": {},
+            "markdown": 1
+        }
+
+        # 添加文件名（仅用于新建文章）
+        if self.current_file_name:
+            post["wp_slug"] = self.current_file_name
             
-        return custom_fields if custom_fields else None
+        # 只添加存在的自定义字段
+        field_names = ['postType', 'thumbnail', 'description', 'keywords', 'location']
+        for field in field_names:
+            if value := metadata.get(field):
+                post['fields'][field] = value
+                
+        return post
 
     def new_post(self, title, content, categories, tags, metadata, publish=True):
         """发布新文章"""
         try:
-            marked_content = "<!--markdown-->" + content
-            
-            # 构建文章数据
-            post = {
-                "title": title,
-                "description": marked_content,
-                "categories": categories,
-                "mt_keywords": ",".join(tags) if tags else "",
-                "post_type": "post",
-                "post_status": "publish" if publish else "draft",
-                "wp_slug": self.current_file_name,
-                # 关键修改在这里，使用fields而不是custom_fields
-                "fields": {
-                    "postType": ["str", metadata.get('postType', '')],
-                    "thumbnail": ["str", metadata.get('thumbnail', '')]
-                }
-            }
+            post = self._build_post_data(title, content, categories, tags, metadata, publish)
+            logger.info(f"发布文章数据: {json.dumps(post, indent=2)}")
             
             post_id = self.server.metaWeblog.newPost(
                 self.blogid, 
@@ -109,6 +102,7 @@ class TypechoClient:
                 post,
                 publish
             )
+            logger.info(f"文章发布成功，ID: {post_id}")
             return post_id
         except Exception as e:
             logger.error(f"发布文章失败: {str(e)}")
@@ -117,21 +111,8 @@ class TypechoClient:
     def edit_post(self, post_id, title, content, categories, tags, metadata, publish=True):
         """更新文章"""
         try:
-            marked_content = "<!--markdown-->" + content
-            
-            post = {
-                "title": title,
-                "description": marked_content,
-                "categories": categories,
-                "mt_keywords": ",".join(tags) if tags else "",
-                "post_type": "post",
-                "post_status": "publish" if publish else "draft",
-                # 同样在编辑时也使用正确的字段格式
-                "fields": {
-                    "postType": ["str", metadata.get('postType', '')],
-                    "thumbnail": ["str", metadata.get('thumbnail', '')]
-                }
-            }
+            post = self._build_post_data(title, content, categories, tags, metadata, publish)
+            logger.info(f"更新文章数据: {json.dumps(post, indent=2)}")
             
             result = self.server.metaWeblog.editPost(
                 post_id,
@@ -140,11 +121,12 @@ class TypechoClient:
                 post,
                 publish
             )
+            logger.info(f"文章更新成功: {result}")
             return result
         except Exception as e:
             logger.error(f"更新文章失败: {str(e)}")
             raise
-
+        
 def init_typecho_client():
     """初始化Typecho客户端"""
     try:
