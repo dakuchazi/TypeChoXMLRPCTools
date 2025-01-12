@@ -86,11 +86,11 @@ jobs:
 
 进入项目仓库，按照下图进行
 
-![](https://image.xukucha.cn/blogimage-20250113020031075.png)
+![](https://image.xukucha.cn/blog/20250113030511.png)
 
 ### 关于XMLRPC_PHP
 
-比如说我的博客是`https://tc.xukucha.cn`那么`XMLRPC_PHP`就填`https://tc.xukucha.cn/action/xmlrpc.php`。可以访问这个地址测试一下，如果页面出现如图就表示没问题：
+比如说我的博客是`https://tc.xukucha.cn`那么`XMLRPC_PHP`就填`https://tc.xukucha.cn/action/xmlrpc`。可以访问这个地址测试一下，如果页面出现如图就表示没问题：
 
 ![](https://image.xukucha.cn/blog20250113021936.png)
 
