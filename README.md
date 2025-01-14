@@ -10,13 +10,9 @@
 
 ---end---
 
-
-
-**以下为说明书**
-
 ----
 
-
+**以下为说明书**
 
 ## 1.修改.workflow
 
@@ -90,7 +86,7 @@ jobs:
 
 比如说我的博客是`https://tc.xukucha.cn`那么`XMLRPC_PHP`就填`https://tc.xukucha.cn/action/xmlrpc`。可以访问这个地址测试一下，如果页面出现如图就表示没问题：
 
-![](https://image.xukucha.cn/blog20250113021936.png)
+![](https://image.xukucha.cn/blog/20250113021936.png)
 
 ## 4.信息元格式
 
@@ -115,11 +111,11 @@ tags: [标签1,标签2]
 
 ```
 
-![](https://image.xukucha.cn/blog20250113022530.png)
+![](https://image.xukucha.cn/blog/20250113022530.png)
 
 写好文章以后，保存文章到`TypeChoXMLRPCTools\_posts`目录下，文件命名推肩使用英文，格式为`yyyy-mm-dd-filename`
 
-![](https://image.xukucha.cn/blog20250113022859.png)
+![](https://image.xukucha.cn/blog/20250113022859.png)
 
 
 
@@ -135,11 +131,11 @@ git commit -m "update"
 git push
 ```
 
-![](https://image.xukucha.cn/blog20250113023722.png)
+![](https://image.xukucha.cn/blog/20250113023722.png)
 
-![](https://image.xukucha.cn/blog1736707087216.jpg)
+![](https://image.xukucha.cn/blog/1736707087216.jpg)
 
-![](https://image.xukucha.cn/blog1736707151012.jpg)
+![](https://image.xukucha.cn/blog/1736707151012.jpg)
 
 
 
