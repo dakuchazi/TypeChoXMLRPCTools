@@ -1,7 +1,7 @@
 # 大苦茶子Github仓库
 
 ---start---
-## 目录(2025年01月20日更新)
+## 目录(2025年01月21日更新)
 [SVG图标颜色跟随文字颜色变化的简单实现](https://tc.xukucha.cn/index.php/p/2025-01-20-svg-fill.html)
 
 [使用Web Worker将大文件分片速度提升10倍](https://tc.xukucha.cn/index.php/p/2025-01-14-file-slice.html)
