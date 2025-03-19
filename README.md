@@ -1,7 +1,9 @@
 # 大苦茶子Github仓库
 
 ---start---
-## 目录(2025年03月17日更新)
+## 目录(2025年03月19日更新)
+[手动实现SSR，深入了解SSR是怎么一回事](https://tc.xukucha.cn/index.php/p/2025-03-20-ssr-implementation.html)
+
 [前端迅速通关TS](https://tc.xukucha.cn/index.php/p/2025-03-17-ts.html)
 
 [前端如何实现GPT的打字（streaming）效果](https://tc.xukucha.cn/index.php/p/2025-02-28-chat-stream.html)
