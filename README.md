@@ -1,7 +1,13 @@
 # 大苦茶子Github仓库
 
 ---start---
-## 目录(2025年03月19日更新)
+## 目录(2025年04月08日更新)
+[web3学习笔记(二)](https://tc.xukucha.cn/index.php/p/2025-04-08-web3(2).html)
+
+[Vue中强大的图片预览组件](https://tc.xukucha.cn/index.php/p/2025-04-08-viewer.html)
+
+[web3学习笔记(一)](https://tc.xukucha.cn/index.php/p/2025-04-07-web3(1).html)
+
 [手动实现SSR，深入了解SSR是怎么一回事](https://tc.xukucha.cn/index.php/p/2025-03-20-ssr-implementation.html)
 
 [前端迅速通关TS](https://tc.xukucha.cn/index.php/p/2025-03-17-ts.html)
