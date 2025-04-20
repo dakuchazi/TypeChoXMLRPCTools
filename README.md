@@ -1,7 +1,9 @@
 # 大苦茶子Github仓库
 
 ---start---
-## 目录(2025年04月13日更新)
+## 目录(2025年04月20日更新)
+[web3学习笔记(三)](https://tc.xukucha.cn/index.php/p/2025-04-08-web3(3).html)
+
 [web3学习笔记(二)](https://tc.xukucha.cn/index.php/p/2025-04-08-web3(2).html)
 
 [Vue中强大的图片预览组件](https://tc.xukucha.cn/index.php/p/2025-04-08-viewer.html)
